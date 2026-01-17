@@ -1,0 +1,20 @@
+{
+  "name": "Kuratour AI",
+  "short_name": "Kuratour",
+  "description": "An AI-powered city tour creator that works offline.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#4f46e5",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/826/826070.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone"
+  ]
+}
