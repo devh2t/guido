@@ -28,12 +28,19 @@ export const generateTourData = async (
   currency: string
 ): Promise<Tour> => {
   const ai = getAI();
-  // Enhanced prompt to respect the budget range specifically
-  const prompt = `Create a high-quality city tour for ${city} in ${language}. 
-  The total estimated cost for one person must be between ${minBudget} and ${maxBudget} ${currency}. 
-  Include stops with lat/lng, description, commentary script, and transport info. 
-  If the budget is high, suggest premium experiences. If low, suggest free or low-cost landmarks.
-  Ensure the response is valid JSON.`;
+  
+  const prompt = `Create a high-quality, comprehensive city tour for ${city} in ${language}. 
+  CRITICAL REQUIREMENTS:
+  1. The tour MUST consist of exactly 5 to 8 distinct stops.
+  2. The total estimated cost for one person MUST be strictly between ${minBudget} and ${maxBudget} ${currency}.
+  3. Tailor the stops to the budget: 
+     - Low budget (<50 ${currency}): Focus on free cultural spots, public parks, and historic architecture.
+     - Mid budget (50-200 ${currency}): Include 1-2 paid museums or local experiences.
+     - High budget (>200 ${currency}): Include premium guided tours, luxury viewpoints, or specialty workshops.
+  4. Provide accurate GPS coordinates for every stop.
+  5. Include detailed transport modes (walking, bus, etc.) and distances.
+  6. The commentary should be engaging and localized.
+  7. Return valid JSON matching the schema.`;
   
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
@@ -51,6 +58,8 @@ export const generateTourData = async (
           totalDistance: { type: Type.STRING },
           stops: {
             type: Type.ARRAY,
+            minItems: 5,
+            maxItems: 8,
             items: {
               type: Type.OBJECT,
               properties: {
@@ -63,7 +72,8 @@ export const generateTourData = async (
                 costDescription: { type: Type.STRING },
                 transportMode: { type: Type.STRING },
                 distanceFromPrevious: { type: Type.STRING }
-              }
+              },
+              required: ["name", "latitude", "longitude", "description", "commentary"]
             }
           }
         },
@@ -77,11 +87,7 @@ export const generateTourData = async (
   
   const data = JSON.parse(text) as Tour;
   
-  if (!data || !data.stops || !Array.isArray(data.stops) || data.stops.length === 0) {
-    throw new Error("Invalid tour data generated: Missing stops");
-  }
-
-  // Ensure every stop has coordinates and images
+  // Ensure every stop has a valid image and coordinates
   data.stops = data.stops.map(stop => ({
     ...stop,
     latitude: stop.latitude || 0,
@@ -94,24 +100,9 @@ export const generateTourData = async (
 
 export const generateAudioNarration = async (text: string, voice: string, targetLanguage: string = 'English'): Promise<string> => {
   const ai = getAI();
-  const personalityMap: Record<string, string> = {
-    'Charon': 'Friendly, warm, and welcoming local guide.',
-    'Kore': 'Energetic, fun, and enthusiastic explorer.',
-    'Puck': 'Calm, professional, and sophisticated historian.',
-    'Zephyr': 'Deep, authoritative, and knowledgeable expert.',
-    'Fenrir': 'Classic storyteller with a sense of wonder.'
-  };
-  const personality = personalityMap[voice] || 'Professional guide.';
-
-  const textOptimizationResponse = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `You are ${voice}, a narrator with the following personality: ${personality}. Adapt the following text for a natural, spoken audio guide in ${targetLanguage}. TEXT: "${text}"`,
-  });
-
-  const optimizedText = textOptimizationResponse.text || text;
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: `Speak this in ${targetLanguage}: ${optimizedText}` }] }],
+    contents: [{ parts: [{ text: `Speak this in ${targetLanguage}: ${text}` }] }],
     config: {
       responseModalities: [Modality.AUDIO],
       speechConfig: { 
@@ -154,8 +145,4 @@ export const reverseGeocode = async (lat: number, lng: number): Promise<string> 
     contents: `What city is at latitude ${lat}, longitude ${lng}? Return only the city name.`
   });
   return response.text?.trim() || 'Unknown City';
-};
-
-export const fetchRealStopImage = async (stopName: string, city: string): Promise<string> => {
-  return `https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&q=80&w=800`;
 };
