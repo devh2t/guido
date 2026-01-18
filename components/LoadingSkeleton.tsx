@@ -1,85 +1,111 @@
 
 import React, { useState, useEffect } from 'react';
-import { Compass, Sparkles } from 'lucide-react';
+import { Compass, Sparkles, Globe2, Zap, ShieldCheck, Landmark, Camera } from 'lucide-react';
 
 interface LoadingSkeletonProps {
   t: (key: string) => string;
   city: string;
 }
 
-const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({ city }) => {
+const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({ city, t }) => {
   const [step, setStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+  
   const steps = [
-    "Analyzing local landmarks in " + city + "...",
-    "Curating hidden gems and scenic routes...",
-    "Calculating walking distances and transport...",
-    "Drafting your personalized audio commentary...",
-    "Finalizing your luxury itinerary..."
+    { text: `Establishing connection to ${city}...`, icon: <Globe2 className="w-4 h-4" /> },
+    { text: "Scouting top-rated landmarks...", icon: <Landmark className="w-4 h-4" /> },
+    { text: "Calculating optimal travel routes...", icon: <Compass className="w-4 h-4" /> },
+    { text: "Personalizing audio commentary...", icon: <Camera className="w-4 h-4" /> },
+    { text: "Polishing your luxury itinerary...", icon: <Sparkles className="w-4 h-4" /> }
   ];
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const progressInterval = setInterval(() => {
+      setProgress(prev => (prev >= 99 ? 99 : prev + (Math.random() * 1.5)));
+    }, 120);
+
+    const stepInterval = setInterval(() => {
       setStep((s) => (s + 1) % steps.length);
-    }, 2500);
-    return () => clearInterval(timer);
+    }, 2800);
+
+    return () => {
+      clearInterval(progressInterval);
+      clearInterval(stepInterval);
+    };
   }, [steps.length]);
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-700 max-w-screen-md mx-auto">
-      {/* Header Skeleton */}
-      <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 overflow-hidden relative">
-        <div className="flex flex-wrap gap-2 mb-4">
-          <div className="h-4 w-16 bg-slate-100 rounded-lg animate-pulse" />
-          <div className="h-4 w-20 bg-slate-100 rounded-lg animate-pulse" />
-        </div>
-        <div className="h-8 w-3/4 bg-slate-100 rounded-xl mb-3 animate-pulse" />
-        <div className="h-4 w-full bg-slate-50 rounded-lg mb-2 animate-pulse" />
-        <div className="h-4 w-2/3 bg-slate-50 rounded-lg animate-pulse" />
-        
-        <div className="flex gap-3 mt-6">
-          <div className="flex-1 h-12 bg-slate-100 rounded-xl animate-pulse" />
-          <div className="flex-1 h-12 bg-slate-100 rounded-xl animate-pulse" />
-        </div>
+    <div className="fixed inset-0 z-[2000] flex flex-col items-center justify-center px-6 animate-in fade-in duration-500">
+      {/* Blurred Background Filter */}
+      <div className="absolute inset-0 bg-slate-50/60 dark:bg-slate-950/80 backdrop-blur-xl z-0" />
+      
+      {/* Scanning Line Effect */}
+      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+        <div className="w-full h-[2px] bg-orange-500/30 dark:bg-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.5)] absolute top-0 animate-[scan_3s_infinite_linear]" />
       </div>
 
-      {/* Main Content Skeleton */}
-      <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 space-y-6">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-slate-100 animate-pulse" />
-          <div className="h-6 w-1/3 bg-slate-100 rounded-lg animate-pulse" />
+      {/* Compact Content Card */}
+      <div className="relative z-20 w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 dark:border-white/5 flex flex-col items-center">
+        
+        {/* Animated Status Badge */}
+        <div className="flex items-center gap-2 mb-6">
+          <div className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+          </div>
+          <span className="text-[9px] font-black text-orange-600 dark:text-orange-500 uppercase tracking-[0.3em]">
+            Synthesis in Progress
+          </span>
         </div>
 
-        <div className="aspect-video bg-slate-50 rounded-[2rem] flex flex-col items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-64 h-64 bg-slate-100 rounded-full animate-ping duration-[3000ms]" />
+        {/* Title & City */}
+        <div className="text-center space-y-2 mb-10">
+          <h3 className="text-3xl font-black text-slate-900 dark:text-white leading-none tracking-tight">
+            Curating {city}
+          </h3>
+          <div className="h-5 overflow-hidden">
+            <p className="text-slate-400 dark:text-slate-500 font-bold text-xs tracking-tight transition-all duration-500">
+              {steps[step].text}
+            </p>
+          </div>
+        </div>
+
+        {/* Immersive Progress Bar */}
+        <div className="w-full space-y-4 mb-8">
+          <div className="flex justify-between items-end px-1">
+            <span className="text-[9px] font-black text-slate-300 dark:text-white/20 uppercase tracking-widest">Optimizing Guide</span>
+            <span className="text-sm font-black text-orange-600 dark:text-orange-500">{Math.floor(progress)}%</span>
           </div>
           
-          <div className="relative z-10 flex flex-col items-center text-center px-8">
-            <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center shadow-xl shadow-slate-200 mb-6 animate-bounce duration-[2000ms]">
-              <Compass className="w-8 h-8 text-white" />
-            </div>
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-              <Sparkles className="w-3 h-3 text-orange-400" />
-              AI Creation in Progress
-            </p>
-            <h3 className="text-slate-800 font-bold text-sm h-6 transition-all duration-500">
-              {steps[step]}
-            </h3>
-          </div>
-
-          <div className="absolute bottom-6 left-6 right-6 flex gap-2 overflow-hidden opacity-30">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-2 flex-1 bg-slate-200 rounded-full" />
-            ))}
+          <div className="w-full h-2.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden relative border border-slate-50 dark:border-white/5">
+            <div 
+              className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(249,115,22,0.3)] transition-all duration-300 ease-out" 
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="h-4 w-full bg-slate-50 rounded-lg animate-pulse" />
-          <div className="h-4 w-full bg-slate-50 rounded-lg animate-pulse" />
-          <div className="h-4 w-3/4 bg-slate-50 rounded-lg animate-pulse" />
+        {/* Compact Badge Row */}
+        <div className="flex items-center justify-around w-full pt-4 border-t border-slate-50 dark:border-white/5">
+          {[
+            { icon: <Zap className="w-3.5 h-3.5" />, label: "Smart" },
+            { icon: <ShieldCheck className="w-3.5 h-3.5" />, label: "Verified" },
+            { icon: <Compass className="w-3.5 h-3.5" />, label: "Local" }
+          ].map((badge, i) => (
+            <div key={i} className="flex flex-col items-center gap-1.5 opacity-30">
+              <div className="text-slate-900 dark:text-white">{badge.icon}</div>
+              <span className="text-[7px] font-black text-slate-900 dark:text-white uppercase tracking-widest">{badge.label}</span>
+            </div>
+          ))}
         </div>
       </div>
+
+      <style>{`
+        @keyframes scan {
+          0% { top: -10%; }
+          100% { top: 110%; }
+        }
+      `}</style>
     </div>
   );
 };

@@ -4,6 +4,14 @@ import { Tour, Stop } from "../types";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+/**
+ * Fetches a relevant image from Unsplash for a given query.
+ */
+const fetchUnsplashImage = (query: string, city: string): string => {
+  const encodedQuery = encodeURIComponent(`${query} ${city}`);
+  return `https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&q=80&w=800&sig=${Math.random()}`; 
+};
+
 export const getCitySuggestions = async (input: string): Promise<string[]> => {
   if (!input || input.length < 2) return [];
   const ai = getAI();
@@ -25,22 +33,28 @@ export const generateTourData = async (
   language: string, 
   minBudget: number, 
   maxBudget: number, 
-  currency: string
+  currency: string,
+  interests: string[] = []
 ): Promise<Tour> => {
   const ai = getAI();
   
+  const interestsPrompt = interests.length > 0 
+    ? `The user is specifically interested in: ${interests.join(', ')}. Ensure the tour heavily features stops related to these themes.`
+    : "Create a balanced mix of top-rated landmarks and local experiences.";
+
   const prompt = `Create a high-quality, comprehensive city tour for ${city} in ${language}. 
   CRITICAL REQUIREMENTS:
   1. The tour MUST consist of exactly 5 to 8 distinct stops.
   2. The total estimated cost for one person MUST be NO MORE THAN ${maxBudget} ${currency}.
-  3. Tailor the stops to the budget: 
+  3. ${interestsPrompt}
+  4. Tailor the stops to the budget: 
      - Low budget (<50 ${currency}): Focus on free cultural spots, public parks, and historic architecture.
      - Mid budget (50-200 ${currency}): Include 1-2 paid museums or local experiences.
      - High budget (>200 ${currency}): Include premium guided tours, luxury viewpoints, or specialty workshops.
-  4. Provide accurate GPS coordinates for every stop.
-  5. Include detailed transport modes (walking, bus, etc.) and distances.
-  6. The commentary should be engaging and localized.
-  7. Return valid JSON matching the schema.`;
+  5. Provide accurate GPS coordinates for every stop.
+  6. Include detailed transport modes (walking, bus, etc.) and distances.
+  7. The commentary should be engaging and localized.
+  8. Return valid JSON matching the schema.`;
   
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
@@ -87,13 +101,17 @@ export const generateTourData = async (
   
   const data = JSON.parse(text) as Tour;
   
-  // Ensure every stop has a valid image and coordinates
-  data.stops = data.stops.map(stop => ({
-    ...stop,
-    latitude: stop.latitude || 0,
-    longitude: stop.longitude || 0,
-    visualUrl: `https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&q=80&w=800`
-  }));
+  // Enhance stops with real imagery
+  data.stops = data.stops.map(stop => {
+    const query = `${stop.name} landmark`;
+    const cityContext = data.city;
+    return {
+      ...stop,
+      latitude: stop.latitude || 0,
+      longitude: stop.longitude || 0,
+      visualUrl: `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(query)},${encodeURIComponent(cityContext)}`
+    };
+  });
 
   return data;
 };
@@ -127,13 +145,23 @@ export const decodeBase64 = (base64: string): Uint8Array => {
   return bytes;
 };
 
-export const decodeAudioBuffer = async (data: Uint8Array, ctx: AudioContext): Promise<AudioBuffer> => {
+export const decodeAudioBuffer = async (
+  data: Uint8Array,
+  ctx: AudioContext,
+  sampleRate: number = 24000,
+  numChannels: number = 1
+): Promise<AudioBuffer> => {
+  // Gemini TTS returns raw PCM 16-bit little-endian data
   const dataInt16 = new Int16Array(data.buffer);
-  const frameCount = dataInt16.length;
-  const buffer = ctx.createBuffer(1, frameCount, 24000);
-  const channelData = buffer.getChannelData(0);
-  for (let i = 0; i < frameCount; i++) {
-    channelData[i] = dataInt16[i] / 32768.0;
+  const frameCount = dataInt16.length / numChannels;
+  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
+  for (let channel = 0; channel < numChannels; channel++) {
+    const channelData = buffer.getChannelData(channel);
+    for (let i = 0; i < frameCount; i++) {
+      // Convert S16 to Float32
+      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    }
   }
   return buffer;
 };

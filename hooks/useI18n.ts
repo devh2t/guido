@@ -11,11 +11,13 @@ export const useI18n = (initialLang: string = 'en') => {
     document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
     
-    // Manage specific font classes if needed
+    // Manage specific font classes
     if (isRtl) {
       document.body.classList.add('font-arabic');
+      document.body.style.fontFamily = "'IBM Plex Sans Arabic', system-ui, sans-serif";
     } else {
       document.body.classList.remove('font-arabic');
+      document.body.style.fontFamily = "'Inter', system-ui, sans-serif";
     }
   }, [language]);
 

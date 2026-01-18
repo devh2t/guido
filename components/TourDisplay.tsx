@@ -1,7 +1,25 @@
 
-import React, { useEffect, useRef } from 'react';
-import { Tour, Stop } from '../types';
-import { Bookmark, PlayCircle, StopCircle, ArrowRight, Footprints, Bus, TramFront, TrainFront, Loader, List, Clock, Ship, Car, Mountain } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Tour } from '../types';
+import { 
+  ArrowRight, 
+  Footprints, 
+  Bus, 
+  TramFront, 
+  TrainFront, 
+  Ship, 
+  Car, 
+  Mountain,
+  Share2,
+  ChevronDown,
+  ChevronUp,
+  MapPin,
+  Volume2,
+  StopCircle,
+  Eye,
+  Bookmark,
+  ArrowLeft
+} from 'lucide-react';
 
 interface TourDisplayProps {
   tour: Tour;
@@ -15,24 +33,21 @@ interface TourDisplayProps {
   onShowTimeline: () => void;
   language: string;
   t: (key: string) => string;
+  onBack: () => void;
 }
 
 const TourDisplay: React.FC<TourDisplayProps> = ({
   tour, activeStopIndex, onStopChange, onPlayNarration,
-  isPlaying, loadingAudio, onSave, onShare, onShowTimeline, language, t
+  isPlaying, loadingAudio, onSave, onShare, onShowTimeline, language, t, onBack
 }) => {
   const activeStop = tour.stops[activeStopIndex];
   const isLastStop = activeStopIndex === tour.stops.length - 1;
-  const timelineRef = useRef<HTMLDivElement>(null);
   const isRtl = document.documentElement.dir === 'rtl';
+  
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    if (timelineRef.current) {
-      const activeElement = timelineRef.current.children[activeStopIndex * 2]; 
-      if (activeElement) {
-        activeElement.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-      }
-    }
+    setIsExpanded(false);
   }, [activeStopIndex]);
 
   const getTransportIcon = (mode?: string) => {
@@ -49,118 +64,128 @@ const TourDisplay: React.FC<TourDisplayProps> = ({
   };
 
   return (
-    <div className={`w-full space-y-3 text-start ${isRtl ? 'font-arabic' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
-      <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full -translate-y-16 translate-x-16 opacity-50"></div>
+    <div className={`w-full space-y-4 text-start pb-10 ${isRtl ? 'font-arabic' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
+      {/* Back & Navigation Header */}
+      <div className="flex items-center justify-between mb-2">
+        <button onClick={onBack} className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm active:scale-90 transition-transform">
+          <ArrowLeft className={`w-5 h-5 ${isRtl ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
+      {/* Main Trip Header Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full -translate-y-16 translate-x-16" />
         
         <div className="relative z-10">
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-             <span className="bg-orange-100 text-orange-600 text-[9px] font-black uppercase px-2 py-0.5 rounded-lg tracking-wider">{tour.city}</span>
-             <span className="bg-slate-100 text-slate-700 text-[9px] font-black uppercase px-2 py-0.5 rounded-lg tracking-wider">
+          <div className="flex items-center gap-3 mb-4">
+             <span className="bg-orange-50 dark:bg-orange-500/10 text-orange-600 text-[10px] font-black uppercase px-4 py-1.5 rounded-full tracking-wider flex items-center gap-1.5">
+               <MapPin className="w-3 h-3" /> {tour.city.toUpperCase()}
+             </span>
+             <span className="bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase px-4 py-1.5 rounded-full tracking-wider">
                {tour.totalEstimatedCost} {tour.currency}
              </span>
           </div>
-          <h2 className="text-2xl font-black text-slate-900 leading-tight mb-2 tracking-tight">{tour.tourTitle}</h2>
-          <p className="text-slate-500 text-xs leading-relaxed line-clamp-2 font-medium">{tour.overview}</p>
-        </div>
+          
+          <div className="flex justify-between items-start gap-4 mb-8">
+            <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight tracking-tight flex-1">
+              {tour.tourTitle}
+            </h2>
+            <button 
+              onClick={onShare}
+              className="p-3.5 bg-slate-50 dark:bg-white/5 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+          </div>
 
-        <div className="flex gap-3 mt-5 relative z-10">
-          <button onClick={onSave} className="flex-1 flex items-center justify-center gap-2 text-[11px] font-bold text-slate-700 bg-slate-50 px-4 py-3 rounded-xl hover:bg-slate-100 transition-colors">
-            <Bookmark className="w-4 h-4" />
-            {t('save')}
-          </button>
-          <button onClick={onShowTimeline} className="flex-1 flex items-center justify-center gap-2 text-[11px] font-bold text-orange-600 bg-orange-50 px-4 py-3 rounded-xl hover:bg-orange-100 transition-colors">
-            <List className="w-4 h-4" />
-            {t('itinerary')}
-          </button>
-        </div>
-        
-        <div className="mt-6 bg-slate-50 p-2.5 rounded-2xl overflow-x-auto no-scrollbar" ref={timelineRef}>
-          <div className="flex items-center w-max gap-2">
-            {tour.stops.map((stop, index) => (
-              <React.Fragment key={index}>
-                {index > 0 && (
-                  <div className="flex items-center opacity-20 px-1">
-                    <div className="w-3 h-px bg-slate-400"></div>
-                  </div>
-                )}
-                <button
-                  onClick={() => onStopChange(index)}
-                  className={`flex-shrink-0 w-32 p-3 rounded-xl text-start transition-all border shadow-sm ${activeStopIndex === index ? 'bg-slate-900 text-white border-slate-900 scale-105' : 'bg-white text-slate-700 border-slate-100'}`}
-                >
-                  <h3 className={`font-black text-[10px] leading-tight truncate ${activeStopIndex === index ? 'text-white' : 'text-slate-800'}`}>
-                    {index + 1}. {stop.name}
-                  </h3>
-                </button>
-              </React.Fragment>
-            ))}
+          <div className="flex gap-4">
+            <button 
+              onClick={onSave} 
+              className="flex-[1.2] flex flex-col items-center justify-center gap-2 bg-slate-50 dark:bg-white/5 py-5 rounded-[1.8rem] border border-slate-100 dark:border-white/5 active:scale-[0.97] transition-all"
+            >
+              <Bookmark className="w-5 h-5 text-slate-900 dark:text-white" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">
+                Ajouter aux Favoris
+              </span>
+            </button>
+            <button 
+              onClick={onShowTimeline} 
+              className="flex-1 flex flex-col items-center justify-center gap-2 bg-[#FFF1E6] dark:bg-orange-500/20 py-5 rounded-[1.8rem] border border-[#FFE4D0] dark:border-orange-500/20 active:scale-[0.97] transition-all"
+            >
+              <Eye className="w-5 h-5 text-orange-600" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-orange-600">
+                Full Itinerary
+              </span>
+            </button>
           </div>
         </div>
       </div>
 
+      {/* Stop Detail Card */}
       {activeStop && (
-        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 animate-in fade-in zoom-in duration-300">
-          <div className="flex items-center gap-4 mb-5">
-            <span className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-lg shadow-xl shadow-slate-200">{activeStopIndex + 1}</span>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">{activeStop.name}</h3>
-          </div>
-          
-          {activeStop.visualUrl && (
-            <div className="mb-5 rounded-[2rem] overflow-hidden aspect-video border border-slate-50 shadow-inner">
-              <img src={activeStop.visualUrl} alt={activeStop.name} className="w-full h-full object-cover" />
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <p className="text-slate-500 text-sm leading-relaxed font-medium">{activeStop.description}</p>
-            
-            <div className="bg-slate-50/50 p-5 rounded-[1.5rem] border border-slate-100 italic">
-              <p className="text-slate-700 text-sm leading-relaxed font-medium">{activeStop.commentary}</p>
-            </div>
-
-            <div className="flex items-center gap-6 py-2">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
-                  <Clock className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('visit')}</p>
-                  <p className="text-[11px] font-bold text-slate-700">{activeStop.costDescription || '30-45 mins'}</p>
-                </div>
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-sm border border-slate-100 dark:border-white/5 animate-in fade-in duration-500">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight flex-1 mr-4">
+                {activeStop.name}
+              </h3>
+              <div className="bg-slate-100 dark:bg-white/10 px-4 py-1.5 rounded-full">
+                <span className="text-xs font-black text-slate-900 dark:text-white tracking-widest">
+                  {activeStopIndex + 1} / {tour.stops.length}
+                </span>
               </div>
-
-              {activeStop.transportMode && (
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-                    {getTransportIcon(activeStop.transportMode)}
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isRtl ? 'التنقل' : 'Transport'}</p>
-                    <p className="text-[11px] font-bold text-slate-700">{activeStop.transportMode}</p>
-                  </div>
-                </div>
-              )}
             </div>
 
-            <div className="grid grid-cols-1 gap-3 pt-4">
+            {/* Split Action Bar (Audio + Next Stop) */}
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => onPlayNarration(activeStop.commentary)}
                 disabled={loadingAudio}
-                className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-sm transition-all shadow-lg ${isPlaying ? 'bg-red-500 text-white' : 'bg-slate-900 text-white hover:bg-slate-800 active:scale-95'}`}
+                className="flex-[0.9] h-14 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-white/5 rounded-full flex items-center justify-center gap-3 active:scale-[0.97] transition-all shadow-sm group"
               >
-                {loadingAudio ? <Loader className="w-5 h-5 animate-spin" /> : isPlaying ? <StopCircle className="w-5 h-5" /> : <PlayCircle className="w-5 h-5" />}
-                {loadingAudio ? '...' : isPlaying ? t('stopSession') : t('hearNarration')}
+                {isPlaying ? (
+                   <StopCircle className="w-5 h-5 text-red-500" />
+                ) : (
+                   <Volume2 className="w-5 h-5 text-orange-600 group-hover:scale-110 transition-transform" />
+                )}
+                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-900 dark:text-white">
+                  Audio-Guide
+                </span>
               </button>
-              
-              {!isLastStop && (
-                <button
-                  onClick={() => onStopChange(activeStopIndex + 1)}
-                  className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm bg-white border-2 border-slate-100 text-slate-700 active:bg-slate-50 active:scale-95 transition-all shadow-sm"
-                >
-                  <span>{t('nextStop')}</span>
-                  <ArrowRight className={`w-5 h-5 ${isRtl ? 'rotate-180' : ''}`} />
-                </button>
+
+              <button
+                onClick={() => onStopChange(isLastStop ? 0 : activeStopIndex + 1)}
+                className="flex-1 h-14 bg-[#0F172A] dark:bg-white rounded-full flex items-center justify-center gap-3 active:scale-[0.97] transition-all shadow-xl"
+              >
+                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white dark:text-[#0F172A]">
+                  {isLastStop ? 'REPRENDRE' : 'PROCHAIN ARRÊT'}
+                </span>
+                <ArrowRight className={`w-4 h-4 text-white dark:text-[#0F172A] ${isRtl ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+
+            {/* Image Container */}
+            <div className="relative rounded-[2.5rem] overflow-hidden border border-slate-100 dark:border-white/5 shadow-inner">
+              <img src={activeStop.visualUrl} alt={activeStop.name} className="w-full aspect-[4/3] object-cover" />
+              {activeStop.transportMode && (
+                <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-2xl flex items-center gap-2 shadow-lg border border-white/20">
+                  {getTransportIcon(activeStop.transportMode)}
+                  <span className="text-[10px] font-black uppercase tracking-widest capitalize">{activeStop.transportMode}</span>
+                </div>
               )}
+            </div>
+
+            {/* Commentary/Description */}
+            <div className="relative">
+              <p className={`text-slate-600 dark:text-slate-300 text-sm leading-relaxed font-medium ${isExpanded ? '' : 'line-clamp-4'}`}>
+                {activeStop.description}
+              </p>
+              <button 
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="mt-2 text-[10px] font-black text-orange-600 uppercase tracking-widest hover:underline"
+              >
+                {isExpanded ? 'Show Less' : 'Read More'}
+              </button>
             </div>
           </div>
         </div>

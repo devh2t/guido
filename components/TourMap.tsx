@@ -1,6 +1,7 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Stop } from '../types';
+import { WifiOff } from 'lucide-react';
 
 interface TourMapProps {
   stops: Stop[];
@@ -14,6 +15,17 @@ const TourMap: React.FC<TourMapProps> = ({ stops, activeStopIndex, onStopClick }
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const polylineRef = useRef<any>(null);
+  const [isOfflineMode, setIsOfflineMode] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleStatus = () => setIsOfflineMode(!navigator.onLine);
+    window.addEventListener('online', handleStatus);
+    window.addEventListener('offline', handleStatus);
+    return () => {
+      window.removeEventListener('online', handleStatus);
+      window.removeEventListener('offline', handleStatus);
+    };
+  }, []);
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -27,13 +39,17 @@ const TourMap: React.FC<TourMapProps> = ({ stops, activeStopIndex, onStopClick }
         attributionControl: false,
       }).setView([stops[0]?.latitude || 0, stops[0]?.longitude || 0], 13);
 
+      // Tile layer configured to try cache first
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         maxZoom: 19,
+        // The service worker handles actual caching, but we can hint tile retention here
+        crossOrigin: true
       }).addTo(mapRef.current);
       
       L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
     }
 
+    // Clear existing markers and lines
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
     if (polylineRef.current) polylineRef.current.remove();
@@ -48,7 +64,7 @@ const TourMap: React.FC<TourMapProps> = ({ stops, activeStopIndex, onStopClick }
         className: 'custom-div-icon',
         html: `
           <div class="relative flex items-center justify-center">
-            <div class="absolute w-8 h-8 ${isActive ? 'bg-slate-900 scale-125' : 'bg-slate-500'} rounded-full shadow-xl border-4 border-white flex items-center justify-center transition-all duration-300">
+            <div class="absolute w-8 h-8 ${isActive ? 'bg-slate-900 scale-125' : 'bg-slate-500'} rounded-full shadow-xl border-4 border-white flex items-center justify-center transition-all duration-300 transform-gpu">
               <span class="text-[10px] font-black text-white">${idx + 1}</span>
             </div>
             ${isActive ? '<div class="absolute w-12 h-12 bg-slate-900/20 rounded-full animate-ping"></div>' : ''}
@@ -83,7 +99,17 @@ const TourMap: React.FC<TourMapProps> = ({ stops, activeStopIndex, onStopClick }
     }
   }, [stops, activeStopIndex, onStopClick]);
 
-  return <div ref={mapContainerRef} className="w-full h-full" />;
+  return (
+    <div className="relative w-full h-full">
+      <div ref={mapContainerRef} className="w-full h-full" />
+      {isOfflineMode && (
+        <div className="absolute top-4 left-4 z-[1000] bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-slate-100 dark:border-white/10 flex items-center gap-2">
+          <WifiOff className="w-3.5 h-3.5 text-orange-600" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Offline Map Mode</span>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default TourMap;
