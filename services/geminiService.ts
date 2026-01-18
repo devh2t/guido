@@ -32,7 +32,7 @@ export const generateTourData = async (
   const prompt = `Create a high-quality, comprehensive city tour for ${city} in ${language}. 
   CRITICAL REQUIREMENTS:
   1. The tour MUST consist of exactly 5 to 8 distinct stops.
-  2. The total estimated cost for one person MUST be strictly between ${minBudget} and ${maxBudget} ${currency}.
+  2. The total estimated cost for one person MUST be NO MORE THAN ${maxBudget} ${currency}.
   3. Tailor the stops to the budget: 
      - Low budget (<50 ${currency}): Focus on free cultural spots, public parks, and historic architecture.
      - Mid budget (50-200 ${currency}): Include 1-2 paid museums or local experiences.

@@ -21,6 +21,7 @@ import LoadingSkeleton from './components/LoadingSkeleton';
 import Footer from './components/Footer';
 import Toast from './components/Toast';
 import AuthPages from './components/AuthPages';
+import NarratorOverlay from './components/NarratorOverlay';
 
 import { Search, WifiOff, Heart, Filter, UserCircle } from 'lucide-react';
 
@@ -79,6 +80,16 @@ const App: React.FC = () => {
     setToastMessage(msg);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
+  };
+
+  const stopAudio = () => {
+    if (audioSourceRef.current) {
+      try {
+        audioSourceRef.current.stop();
+      } catch (e) {}
+      audioSourceRef.current = null;
+    }
+    setIsPlaying(false);
   };
 
   const handleGeolocationSearch = () => {
@@ -148,8 +159,7 @@ const App: React.FC = () => {
       return;
     }
     if (isPlaying) { 
-      if (audioSourceRef.current) audioSourceRef.current.stop();
-      setIsPlaying(false);
+      stopAudio();
       return; 
     }
     setLoadingAudio(true);
@@ -194,6 +204,7 @@ const App: React.FC = () => {
       { name: 'Amsterdam', img: 'https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&q=80&w=800' },
       { name: 'Prague', img: 'https://images.unsplash.com/photo-1519677100203-a0e668c92439?auto=format&fit=crop&q=80&w=800' }
     ],
+    // FIXED: Corrected 'Americas' key and content structure from the malformed original snippet
     'Americas': [
       { name: 'New York', img: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&q=80&w=800' },
       { name: 'Rio de Janeiro', img: 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&q=80&w=800' },
@@ -213,6 +224,7 @@ const App: React.FC = () => {
   return (
     <div className={`min-h-screen pb-36 bg-white transition-all duration-500`}>
       <Toast show={showToast} message={toastMessage} />
+      <NarratorOverlay isPlaying={isPlaying} voiceId={voice} onStop={stopAudio} isRtl={isRtl} />
       
       {!isOnline && (
         <div className="fixed top-0 left-0 right-0 z-[1000] bg-orange-600 text-white text-[10px] font-black py-1 flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg">

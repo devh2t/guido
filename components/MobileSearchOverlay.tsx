@@ -97,11 +97,11 @@ const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
             </div>
           </div>
 
-          {/* Budget Inputs */}
+          {/* Budget Input - Simplified to only Max Budget */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Banknote className="w-3 h-3" /> {t('priceRange')}
+                <Banknote className="w-3 h-3" /> {t('maxBudget')}
               </label>
               <select 
                 className="bg-slate-50 text-[10px] font-black p-1 rounded-lg outline-none" 
@@ -112,32 +112,21 @@ const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
               </select>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <span className="text-[10px] text-slate-400 font-bold uppercase">{isRtl ? 'الأدنى' : 'Min'}</span>
-                <div className="relative">
-                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">{getCurrencySymbol()}</span>
-                   <input
-                    type="number"
-                    value={minBudget}
-                    onChange={(e) => setMinBudget(Number(e.target.value))}
-                    className="w-full pl-8 pr-3 py-3 rounded-xl bg-slate-50 font-black text-slate-800 text-sm outline-none"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <span className="text-[10px] text-slate-400 font-bold uppercase">{isRtl ? 'الأقصى' : 'Max'}</span>
-                <div className="relative">
-                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">{getCurrencySymbol()}</span>
-                   <input
-                    type="number"
-                    value={maxBudget}
-                    onChange={(e) => setMaxBudget(Number(e.target.value))}
-                    className="w-full pl-8 pr-3 py-3 rounded-xl bg-slate-50 font-black text-slate-800 text-sm outline-none"
-                  />
-                </div>
-              </div>
+            <div className="relative group">
+               <span className={`absolute ${isRtl ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm`}>
+                 {getCurrencySymbol()}
+               </span>
+               <input
+                type="number"
+                value={maxBudget}
+                onChange={(e) => setMaxBudget(Number(e.target.value))}
+                placeholder="0"
+                className={`w-full ${isRtl ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-4 rounded-2xl bg-slate-50 font-black text-slate-900 text-lg outline-none border-2 border-transparent focus:border-slate-900 focus:bg-white transition-all`}
+              />
             </div>
+            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide">
+              {isRtl ? 'سنقوم بتخصيص جولتك لتبقى ضمن هذه الميزانية' : 'We will tailor your journey to stay under this limit'}
+            </p>
           </div>
 
           {/* Language & Narrator */}
