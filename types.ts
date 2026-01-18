@@ -8,7 +8,7 @@ export interface Stop {
   estimatedCost: number;
   costDescription: string;
   distanceFromPrevious?: string; // e.g. "1.5 km"
-  transportMode?: 'walking' | 'bus' | 'tram' | 'metro';
+  transportMode?: 'walking' | 'bus' | 'tram' | 'metro' | 'ferry' | 'taxi' | 'cable_car';
   transportCost?: number;
   transportDescription?: string; // e.g. "Take Metro Line 1 to Station X"
   visualUrl?: string; // URL to a real photo

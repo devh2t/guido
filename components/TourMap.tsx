@@ -9,7 +9,7 @@ interface TourMapProps {
   currency: string;
 }
 
-const TourMap: React.FC<TourMapProps> = ({ stops, activeStopIndex, onStopClick, currency }) => {
+const TourMap: React.FC<TourMapProps> = ({ stops, activeStopIndex, onStopClick }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
@@ -18,7 +18,6 @@ const TourMap: React.FC<TourMapProps> = ({ stops, activeStopIndex, onStopClick, 
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    // Initialize Leaflet map
     const L = (window as any).L;
     if (!L) return;
 
@@ -35,12 +34,10 @@ const TourMap: React.FC<TourMapProps> = ({ stops, activeStopIndex, onStopClick, 
       L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
     }
 
-    // Clear existing layers
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
     if (polylineRef.current) polylineRef.current.remove();
 
-    // Add Markers
     const latLngs: [number, number][] = [];
     stops.forEach((stop, idx) => {
       const latLng: [number, number] = [stop.latitude, stop.longitude];
@@ -51,10 +48,10 @@ const TourMap: React.FC<TourMapProps> = ({ stops, activeStopIndex, onStopClick, 
         className: 'custom-div-icon',
         html: `
           <div class="relative flex items-center justify-center">
-            <div class="absolute w-8 h-8 ${isActive ? 'bg-indigo-600 scale-125' : 'bg-slate-800'} rounded-full shadow-xl border-4 border-white flex items-center justify-center transition-all duration-300">
+            <div class="absolute w-8 h-8 ${isActive ? 'bg-slate-900 scale-125' : 'bg-slate-500'} rounded-full shadow-xl border-4 border-white flex items-center justify-center transition-all duration-300">
               <span class="text-[10px] font-black text-white">${idx + 1}</span>
             </div>
-            ${isActive ? '<div class="absolute w-12 h-12 bg-indigo-600/20 rounded-full animate-ping"></div>' : ''}
+            ${isActive ? '<div class="absolute w-12 h-12 bg-slate-900/20 rounded-full animate-ping"></div>' : ''}
           </div>
         `,
         iconSize: [32, 32],
@@ -66,10 +63,9 @@ const TourMap: React.FC<TourMapProps> = ({ stops, activeStopIndex, onStopClick, 
       markersRef.current.push(marker);
     });
 
-    // Add Route Polyline
     if (latLngs.length > 1) {
       polylineRef.current = L.polyline(latLngs, {
-        color: '#4f46e5',
+        color: '#0f172a',
         weight: 4,
         opacity: 0.6,
         dashArray: '10, 10',
@@ -77,7 +73,6 @@ const TourMap: React.FC<TourMapProps> = ({ stops, activeStopIndex, onStopClick, 
       }).addTo(mapRef.current);
     }
 
-    // Adjust view to show all markers or center on active
     if (activeStopIndex >= 0 && stops[activeStopIndex]) {
       mapRef.current.flyTo([stops[activeStopIndex].latitude, stops[activeStopIndex].longitude], 15, {
         duration: 1.5,
@@ -86,10 +81,6 @@ const TourMap: React.FC<TourMapProps> = ({ stops, activeStopIndex, onStopClick, 
     } else if (latLngs.length > 0) {
       mapRef.current.fitBounds(L.latLngBounds(latLngs), { padding: [50, 50] });
     }
-
-    return () => {
-      // Cleanup happens if component unmounts
-    };
   }, [stops, activeStopIndex, onStopClick]);
 
   return <div ref={mapContainerRef} className="w-full h-full" />;
